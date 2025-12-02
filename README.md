@@ -2,7 +2,7 @@
 
 This repository contains a Python implementation of the WebRTC driver to connect to the Unitree Go2 and G1 Robots. WebRTC is used by the Unitree Go/Unitree Explore APP and provides high-level control through it. Therefore, no jailbreak or firmware manipulation is required. It works out of the box for Go2 AIR/PRO/EDU models and G1 AIR/EDU.
 
-![Description of the image](./images/screenshot_1.png)
+![Description of the image](https://github.com/legion1581/unitree_webrtc_connect/raw/master/images/screenshot_1.png)
 
 ## Currently Supported Firmware Versions
 
