@@ -74,8 +74,8 @@ class FutureResolver:
 
     def run_resolve_for_topic_for_file(self, message):
         key = self.generate_message_key(
-            message["type"], 
-            message.get("topic", ""), 
+            message["type"],
+            message.get("topic", ""),
             get_nested_field(message, "data", "uuid") or
             get_nested_field(message, "data", "header", "identity", "id") or
             get_nested_field(message, "info", "uuid") or
@@ -116,5 +116,3 @@ class FutureResolver:
 
     def generate_message_key(self, message_type, topic, identifier):
         return identifier or f"{message_type} $ {topic}"
-
-

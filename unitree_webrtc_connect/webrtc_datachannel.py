@@ -62,7 +62,7 @@ class WebRTCDataChannel:
         async def on_message(message):
             logging.info("Received message on data channel: %s", message)
             try:
-            
+
                 # Check if the message is not empty
                 if not message:
                     return
@@ -72,13 +72,13 @@ class WebRTCDataChannel:
                     parsed_data = json.loads(message)
                 elif isinstance(message, bytes):
                     parsed_data = self.deal_array_buffer(message)
-                
+
                 # Resolve any pending futures or callbacks associated with this message
                 self.pub_sub.run_resolve(parsed_data)
 
                 # Handle the response
                 await self.handle_response(parsed_data)
-        
+
             except json.JSONDecodeError:
                 logging.error("Failed to decode JSON message: %s", message, exc_info=True)
             except Exception as error:
@@ -128,9 +128,17 @@ class WebRTCDataChannel:
 
         decoded_json = json.loads(json_data.decode('utf-8'))
 
-        decoded_data = self.decoder.decode(binary_data, decoded_json['data'])
+        topic = decoded_json.get("topic", "")
 
-        decoded_json['data']['data'] = decoded_data
+        # Only decode with lidar decoder for lidar topics
+        if "utlidar" in topic:
+            decoded_data = self.decoder.decode(binary_data, decoded_json['data'])
+            decoded_json['data']['data'] = decoded_data
+        else:
+            # Non-lidar binary: attach raw bytes into 'data' field
+            # (chunking system reads from data.data to assemble chunks)
+            decoded_json['data']['data'] = binary_data
+
         return decoded_json
 
     def deal_array_buffer_for_lidar(self, buffer):
