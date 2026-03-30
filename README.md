@@ -1,97 +1,152 @@
-# Unitree Go2 and G1 WebRTC Driver
+# Unitree WebRTC Connect
 
-This repository contains a Python implementation of the WebRTC driver to connect to the Unitree Go2 and G1 Robots. WebRTC is used by the Unitree Go/Unitree Explore APP and provides high-level control through it. Therefore, no jailbreak or firmware manipulation is required. It works out of the box for Go2 AIR/PRO/EDU models and G1 AIR/EDU.
+Python WebRTC driver for Unitree Go2 and G1 robots. Provides high-level control through the same WebRTC protocol used by the Unitree Go/Unitree Explore mobile apps — no jailbreak or firmware modification required.
 
-![Description of the image](https://github.com/legion1581/unitree_webrtc_connect/raw/master/images/screenshot_1.png)
-
+![Screenshot](https://github.com/legion1581/unitree_webrtc_connect/raw/master/images/screenshot_1.png)
 
 [![PyPI](https://img.shields.io/pypi/v/unitree-webrtc-connect.svg)](https://pypi.org/project/unitree-webrtc-connect/)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/legion1581/unitree_webrtc_connect)](https://github.com/legion1581/unitree_webrtc_connect/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Supported Models
 
-## Currently Supported Firmware Versions
+| Model | Variants |
+|-------|----------|
+| **Go2** | AIR, PRO, EDU |
+| **G1** | AIR, EDU |
 
-**Go2:**
-- **1.1.x series**: 1.1.1 – 1.1.11 *(latest available)*
-- **1.0.x series**: 1.0.19 – 1.0.25
+## Supported Firmware
 
-**G1:**
-- **1.4.0** *(latest available)*
+| Robot | Firmware Versions |
+|-------|-------------------|
+| **Go2** | 1.1.1 – 1.1.14 *(latest)*, 1.0.19 – 1.0.25 |
+| **G1** | 1.4.0 *(latest)* |
 
-## Audio and Video Support (Go2 only)
+## Features
 
-There are video (recvonly) and audio (sendrecv) channels in WebRTC that you can connect to. Check out the examples in the `/example` folder.
+| Feature | Go2 | G1 |
+|---------|:---:|:--:|
+| Data channel (pub/sub, RPC) | yes | yes |
+| Sport mode control | yes | yes |
+| Video stream (receive) | yes | — |
+| Audio stream (send/receive) | yes | — |
+| LiDAR point cloud decoding | yes | — |
+| VUI (LED, brightness, volume) | yes | — |
+| AudioHub (audio file management) | yes | — |
+| Obstacle avoidance API | yes | — |
+| Multicast device discovery | yes | — |
 
-## Lidar support (Go2 only)
+## Installation
 
-There is a lidar decoder built in, so you can handle decoded PoinClouds directly. Check out the examples in the `/example` folder.
-
-## Connection Methods
-
-The driver supports three types of connection methods:
-
-1. **AP Mode**: Go2/G1 is in AP mode, and the WebRTC client is connected directly to it:
-
-    ```python
-    UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)
-    ```
-
-2. **STA-L Mode**: Go2/G1 and the WebRTC client are on the same local network. An IP or Serial number is required:
-
-    ```python
-    UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")
-    ```
-
-
-    If the IP is unknown, you can specify only the serial number, and the driver will try to find the IP using the special Multicast discovery feature available on Go2:
-
-    ```python
-    UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, serialNumber="B42D2000XXXXXXXX")
-    ```
-
-3. **STA-T mode**: Remote connection through remote Unitrees TURN server. Could control your Go2/G1 even being on the diffrent network. Requires username and pass from Unitree account
-
-    ```python
-    UnitreeWebRTCConnection(WebRTCConnectionMethod.Remote, serialNumber="B42D2000XXXXXXXX", username="email@gmail.com", password="pass")
-    ```
-
-## Multicast scanner (Go2 only)
-The driver has a built-in Multicast scanner to find the Unitree Go2 on the local network and connect using only the serial number.
-
-## PIP installation (Recommended)
+### PyPI (recommended)
 
 ```sh
-cd ~
 sudo apt update
 sudo apt install -y python3-pip portaudio19-dev
 pip install unitree_webrtc_connect
 ```
 
-
-## Manual Installation 
+### From source
 
 ```sh
-cd ~
 sudo apt update
 sudo apt install -y python3-pip portaudio19-dev
-pip install --upgrade setuptools pip
 git clone https://github.com/legion1581/unitree_webrtc_connect.git
 cd unitree_webrtc_connect
 pip install -e .
 ```
 
-## Usage 
-Example programs are located in the /example directory.
+## Quick Start
 
-### Thanks
+```python
+from unitree_webrtc_connect import UnitreeWebRTCConnection, WebRTCConnectionMethod
+
+conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.123.18")
+await conn.connect()
+```
+
+## Connection Methods
+
+### AP Mode
+Robot is in Access Point mode, client connects directly to the robot's WiFi.
+
+```python
+UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)
+```
+
+### STA-L Mode (Local Network)
+Robot and client are on the same local network. Requires IP or serial number.
+
+```python
+# By IP
+UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")
+
+# By serial number (uses multicast discovery, Go2 only)
+UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, serialNumber="B42D2000XXXXXXXX")
+```
+
+### STA-T Mode (Remote)
+Remote connection through Unitree's TURN server. Control your robot from a different network. Requires Unitree account credentials.
+
+```python
+UnitreeWebRTCConnection(
+    WebRTCConnectionMethod.Remote,
+    serialNumber="B42D2000XXXXXXXX",
+    username="email@gmail.com",
+    password="pass"
+)
+```
+
+## Examples
+
+Examples are organized by robot model under the `/examples` directory:
+
+### Go2
+
+| Category | Example | Description |
+|----------|---------|-------------|
+| **Data Channel** | `data_channel/sportmode/` | Sport mode movement commands |
+| | `data_channel/sportmodestate/` | Subscribe to sport mode state |
+| | `data_channel/lowstate/` | Subscribe to low-level state (IMU, motors) |
+| | `data_channel/multiplestate/` | Subscribe to multiple state topics |
+| | `data_channel/vui/` | VUI control (LED, volume, brightness) |
+| | `data_channel/lidar/lidar_stream.py` | LiDAR point cloud subscription |
+| | `data_channel/lidar/plot_lidar_stream.py` | LiDAR 3D visualization (Three.js) |
+| **Audio** | `audio/live_audio/` | Live audio receive |
+| | `audio/save_audio/` | Save audio to file |
+| | `audio/mp3_player/` | Play MP3 through robot speaker |
+| | `audio/internet_radio/` | Stream internet radio |
+| **Video** | `video/camera_stream/` | Display video stream |
+
+### G1
+
+| Category | Example | Description |
+|----------|---------|-------------|
+| **Data Channel** | `data_channel/sport_mode/` | Sport mode movement commands |
+
+## Imports
+
+All public classes and constants are exported from the package root:
+
+```python
+from unitree_webrtc_connect import (
+    UnitreeWebRTCConnection,
+    WebRTCConnectionMethod,
+    WebRTCDataChannel,
+    WebRTCDataChannelPubSub,
+    DATA_CHANNEL_TYPE,
+    RTC_TOPIC,
+    SPORT_CMD,
+)
+```
+
+## Acknowledgements
 
 A big thank you to TheRoboVerse community! Visit us at [TheRoboVerse](https://theroboverse.com) for more information and support.
 
-Special thanks to the [tfoldi WebRTC project](https://github.com/tfoldi/go2-webrtc) and [abizovnuralem](https://github.com/abizovnuralem) for adding LiDAR support, [MrRobotow](https://github.com/MrRobotoW) for providing a plot LiDAR example. Special thanks to [Nico](https://github.com/oulianov) for the aiortc monkey patch.
+Special thanks to the [tfoldi WebRTC project](https://github.com/tfoldi/go2-webrtc) and [abizovnuralem](https://github.com/abizovnuralem) for adding LiDAR support, [MrRobotoW](https://github.com/MrRobotoW) for the LiDAR visualization example, and [Nico](https://github.com/oulianov) for the aiortc monkey patch.
 
- 
-### Support
+## Support
 
 If you like this project, please consider buying me a coffee:
 
