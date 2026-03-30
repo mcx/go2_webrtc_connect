@@ -50,9 +50,11 @@ class FutureResolver:
                     self.chunk_data_storage[key] = [data_chunk]
                 return
             else:
-                self.chunk_data_storage[key].append(data_chunk)
-                message["data"]["data"] = self.merge_array_buffers(self.chunk_data_storage[key])
-                del self.chunk_data_storage[key]
+                # Final (or only) chunk — merge if previous chunks exist
+                if key in self.chunk_data_storage:
+                    self.chunk_data_storage[key].append(data_chunk)
+                    message["data"]["data"] = self.merge_array_buffers(self.chunk_data_storage[key])
+                    del self.chunk_data_storage[key]
 
         # Resolve the pending future with the final message
         if key in self.pending_callbacks:
