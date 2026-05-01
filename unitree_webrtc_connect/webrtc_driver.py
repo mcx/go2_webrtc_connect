@@ -1,10 +1,15 @@
 import asyncio
 import logging
 import json
-import sys
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 from aiortc.contrib.media import MediaPlayer
-from .unitree_auth import send_sdp_to_local_peer, send_sdp_to_remote_peer
+from aiortc.mediastreams import MediaStreamError
+from .unitree_auth import (
+    NoSdpAnswerError,
+    RobotBusyError,
+    send_sdp_to_local_peer,
+    send_sdp_to_remote_peer,
+)
 from .webrtc_datachannel import WebRTCDataChannel
 from .webrtc_audio import WebRTCAudioChannel
 from .webrtc_video import WebRTCVideoChannel
@@ -16,19 +21,50 @@ from .multicast_scanner import discover_ip_sn
 # logging.basicConfig(level=logging.INFO)
 
 class UnitreeWebRTCConnection:
-    def __init__(self, connectionMethod: WebRTCConnectionMethod, serialNumber=None, ip=None, username=None, password=None) -> None:
+    def __init__(
+        self,
+        connectionMethod: WebRTCConnectionMethod,
+        serialNumber=None,
+        ip=None,
+        username=None,
+        password=None,
+        aes_128_key: str = None,
+        region: str = "global",
+        device_type: str = "Go2",
+    ) -> None:
+        """`aes_128_key` is the per-device 16-byte key (32 hex chars) the
+        cloud returns as `dev.key` in `device/bind/list`. Required on G1
+        firmware ≥ 1.5.1 for the LAN flow (con_notify returns
+        `data2 === 3`); ignored on older firmware. Fetch it via
+        `examples/fetch_aes_key.py` once per robot and cache locally.
+
+        `region` (`"global"`/`"cn"`) and `device_type` (`"Go2"`/`"G1"`)
+        select the correct cloud endpoint + AppName header for the
+        Remote signaling flow."""
         self.pc = None
         self.sn = serialNumber
         self.ip = ip
         self.connectionMethod = connectionMethod
         self.isConnected = False
-        self.token = fetch_token(username, password) if username and password else ""
+        self.aes_128_key = aes_128_key
+        self.region = region
+        self.device_type = device_type
+        self.token = (
+            fetch_token(username, password, region=region, device_type=device_type)
+            if username and password
+            else ""
+        )
 
     async def connect(self):
         print_status("WebRTC connection", "🟡 started")
         if self.connectionMethod == WebRTCConnectionMethod.Remote:
-            self.public_key = fetch_public_key()
-            turn_server_info = fetch_turn_server_info(self.sn, self.token, self.public_key)
+            self.public_key = fetch_public_key(
+                region=self.region, device_type=self.device_type,
+            )
+            turn_server_info = fetch_turn_server_info(
+                self.sn, self.token, self.public_key,
+                region=self.region, device_type=self.device_type,
+            )
             await self.init_webrtc(turn_server_info)
         elif self.connectionMethod == WebRTCConnectionMethod.LocalSTA:
             if not self.ip and self.sn:
@@ -155,18 +191,24 @@ class UnitreeWebRTCConnection:
         
         @self.pc.on("track")
         async def on_track(track):
-            logging.info("Track recieved: %s", track.kind)
+            logging.info("Track received: %s", track.kind)
 
-            if track.kind == "video":
-                #await for the first frame, #ToDo make the code more nicer
-                frame = await track.recv()
-                await self.video.track_handler(track)
-                
-            if track.kind == "audio":
-                frame = await track.recv()
-                while True:
-                    frame = await track.recv()
-                    await self.audio.frame_handler(frame)
+            # `MediaStreamError` is how aiortc signals end-of-track when the
+            # peer closes — wrap both reader loops so a clean disconnect
+            # doesn't dump a pyee traceback into the user's console.
+            try:
+                if track.kind == "video":
+                    # Discard first frame, then hand the track to the video reader.
+                    await track.recv()
+                    await self.video.track_handler(track)
+
+                elif track.kind == "audio":
+                    await track.recv()  # warm-up
+                    while True:
+                        frame = await track.recv()
+                        await self.audio.frame_handler(frame)
+            except MediaStreamError:
+                logging.debug("Track %s ended", track.kind)
 
         logging.info("Creating offer...")
         offer = await self.pc.createOffer()
@@ -177,15 +219,12 @@ class UnitreeWebRTCConnection:
         elif self.connectionMethod == WebRTCConnectionMethod.LocalSTA or self.connectionMethod == WebRTCConnectionMethod.LocalAP:
             peer_answer_json = await self.get_answer_from_local_peer(self.pc, self.ip)
 
-        if peer_answer_json is not None:
-            peer_answer = json.loads(peer_answer_json)
-        else:
-            print("Could not get SDP from the peer. Check if the Go2 is switched on")
-            sys.exit(1)
+        if peer_answer_json is None:
+            raise NoSdpAnswerError()
+        peer_answer = json.loads(peer_answer_json)
 
         if peer_answer['sdp'] == "reject":
-            print("Go2 is connected by another WebRTC client. Close your mobile APP and try again.")
-            sys.exit(1)
+            raise RobotBusyError()
 
         remote_sdp = RTCSessionDescription(sdp=peer_answer['sdp'], type=peer_answer['type']) 
         await self.pc.setRemoteDescription(remote_sdp)
@@ -206,7 +245,14 @@ class UnitreeWebRTCConnection:
 
         logging.debug("Local SDP created: %s", sdp_offer_json)
 
-        peer_answer_json = send_sdp_to_remote_peer(self.sn, json.dumps(sdp_offer_json), self.token, self.public_key)
+        peer_answer_json = send_sdp_to_remote_peer(
+            self.sn,
+            json.dumps(sdp_offer_json),
+            self.token,
+            self.public_key,
+            region=self.region,
+            device_type=self.device_type,
+        )
 
         return peer_answer_json
 
@@ -220,7 +266,9 @@ class UnitreeWebRTCConnection:
             "token": self.token
         }
 
-        peer_answer_json = send_sdp_to_local_peer(ip, json.dumps(sdp_offer_json))
+        peer_answer_json = send_sdp_to_local_peer(
+            ip, json.dumps(sdp_offer_json), aes_128_key=self.aes_128_key,
+        )
 
         return peer_answer_json
 

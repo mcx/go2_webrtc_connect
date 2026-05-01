@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import struct
-import sys
 from .msgs.pub_sub import WebRTCDataChannelPubSub
 from .lidar.lidar_decoder_unified import UnifiedLidarDecoder
 from .msgs.heartbeat import WebRTCDataChannelHeartBeat
@@ -40,7 +39,7 @@ class WebRTCDataChannel:
 
         #Event handler for Network status Update
         def on_network_status(mode):
-            print(f"Go2 connection mode: {mode}")
+            print_status("Robot Connection Mode", f"📡 {mode}")
 
         self.rtc_inner_req.network_status.set_on_network_status_callback(on_network_status)
 
@@ -100,13 +99,23 @@ class WebRTCDataChannel:
             await self.validaton.handle_err_response(msg)
         
 
-    async def wait_datachannel_open(self, timeout=5):
-        """Waits for the data channel to open asynchronously."""
+    async def wait_datachannel_open(self, timeout=15):
+        """Waits for the data channel to open + validation to complete.
+
+        Default 15 s — covers ICE checking + DTLS handshake + validation
+        round-trip on a busy LAN. The 5 s used previously timed out
+        legitimately on slower setups."""
         try:
             await asyncio.wait_for(self._wait_for_open(), timeout)
         except asyncio.TimeoutError:
-            print("Data channel did not open in time")
-            sys.exit(1)
+            from .unitree_auth import DataChannelTimeoutError
+            pc = getattr(self.conn, "pc", None)
+            raise DataChannelTimeoutError(
+                timeout,
+                peer_state=getattr(pc, "connectionState", "?") or "?",
+                ice_state=getattr(pc, "iceConnectionState", "?") or "?",
+                channel_state=getattr(self.channel, "readyState", "?") or "?",
+            )
 
     async def _wait_for_open(self):
         """Internal function that waits for the data channel to be opened."""
@@ -201,6 +210,6 @@ class WebRTCDataChannel:
 
         # Create an instance of UnifiedLidarDecoder with the specified type
         self.decoder = UnifiedLidarDecoder(decoder_type=decoder_type)
-        print(f"Decoder set to: {self.decoder.get_decoder_name()}")
+        print_status("Lidar Decoder", f"🧊 {self.decoder.get_decoder_name()}")
     
     

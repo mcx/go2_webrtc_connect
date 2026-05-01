@@ -17,24 +17,26 @@ Python WebRTC driver for Unitree Go2 and G1 robots. Provides high-level control 
 
 ## Supported Firmware
 
-| Robot | Firmware Versions |
-|-------|-------------------|
-| **Go2** | 1.1.1 – 1.1.14 *(latest)*, 1.0.19 – 1.0.25 |
-| **G1** | 1.4.0 *(latest)* |
+| Robot | Firmware Versions | Auth |
+|-------|-------------------|------|
+| **Go2** | 1.1.1 – 1.1.14 *(latest)*, 1.0.19 – 1.0.25 | static GCM key (`data2=2`) |
+| **G1** | 1.2.0 – 1.4.5 | static GCM key (`data2=2`) |
+| **G1** | 1.5.1+ *(latest)* | per-device AES-128 key (`data2=3`) — see [G1 ≥ 1.5.1 — AES-128 Key](#g1--151--aes-128-key-data23) |
 
 ## Features
 
 | Feature | Go2 | G1 |
 |---------|:---:|:--:|
 | Data channel (pub/sub, RPC) | yes | yes |
-| Sport mode control | yes | yes |
-| Video stream (receive) | yes | — |
+| Sport / arm-action control | yes | yes |
+| Video stream (receive) | yes | yes |
 | Audio stream (send/receive) | yes | — |
 | LiDAR point cloud decoding | yes | — |
 | VUI (LED, brightness, volume) | yes | — |
 | AudioHub (audio file management) | yes | — |
 | Obstacle avoidance API | yes | — |
 | Multicast device discovery | yes | — |
+| `data2=3` per-device key auth | — | yes (G1 ≥ 1.5.1) |
 
 ## Installation
 
@@ -61,7 +63,17 @@ pip install -e .
 ```python
 from unitree_webrtc_connect import UnitreeWebRTCConnection, WebRTCConnectionMethod
 
+# Go2 / older G1 firmware — no extra auth needed
 conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.123.18")
+await conn.connect()
+
+# G1 firmware ≥ 1.5.1 — per-device AES-128 key required for the LAN handshake
+# (see "G1 ≥ 1.5.1 — AES-128 Key" below for how to fetch it)
+conn = UnitreeWebRTCConnection(
+    WebRTCConnectionMethod.LocalSTA,
+    ip="192.168.10.225",
+    aes_128_key="<32-hex-chars>",
+)
 await conn.connect()
 ```
 
@@ -72,6 +84,12 @@ Robot is in Access Point mode, client connects directly to the robot's WiFi.
 
 ```python
 UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)
+
+# G1 ≥ 1.5.1 in AP mode
+UnitreeWebRTCConnection(
+    WebRTCConnectionMethod.LocalAP,
+    aes_128_key="<32-hex-chars>",
+)
 ```
 
 ### STA-L Mode (Local Network)
@@ -83,18 +101,109 @@ UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")
 
 # By serial number (uses multicast discovery, Go2 only)
 UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, serialNumber="B42D2000XXXXXXXX")
+
+# G1 ≥ 1.5.1 by IP, with per-device key
+UnitreeWebRTCConnection(
+    WebRTCConnectionMethod.LocalSTA,
+    ip="192.168.10.225",
+    aes_128_key="<32-hex-chars>",
+)
 ```
 
 ### STA-T Mode (Remote)
 Remote connection through Unitree's TURN server. Control your robot from a different network. Requires Unitree account credentials.
 
+`region` and `device_type` pick the cloud endpoint and the `AppName` header — `Go2` hits `global-robot-api.unitree.com` with `AppName: Go2`, `G1` does the same host with `AppName: G1`. Use `region="cn"` for accounts registered in China.
+
 ```python
+# Go2 (default)
 UnitreeWebRTCConnection(
     WebRTCConnectionMethod.Remote,
     serialNumber="B42D2000XXXXXXXX",
     username="email@gmail.com",
-    password="pass"
+    password="pass",
 )
+
+# G1 in China region
+UnitreeWebRTCConnection(
+    WebRTCConnectionMethod.Remote,
+    serialNumber="E21D6000PBF9ELG5",
+    username="email@gmail.com",
+    password="pass",
+    region="cn",
+    device_type="G1",
+)
+```
+
+## G1 ≥ 1.5.1 — AES-128 Key (`data2=3`)
+
+Starting with G1 firmware **1.5.1**, the LAN signaling handshake (`con_notify`) returns `data2=3`, which means the embedded RSA public key is wrapped under a **per-device AES-128-GCM key**. Without that key the WebRTC handshake can't decrypt the public key and the connection never starts. (Older firmware uses a static AES-GCM key — handled automatically.)
+
+The key is **per device**, **stable across re-pairings**, stored on the robot at `/unitree/etc/key/aes_key.bin` (RSA-wrapped), and surfaced to the cloud as `dev.key` in `device/bind/list`.
+
+### Fetch via the bundled CLI
+
+After `pip install unitree_webrtc_connect` you get a console script:
+
+```sh
+# By default: region=global, device family=G1 — fits most users.
+unitree-fetch-aes-key --email you@example.com --password '...'
+
+# China region:
+unitree-fetch-aes-key --email you@example.com --password '...' --region cn
+
+# Single SN, scriptable (bare key on stdout):
+unitree-fetch-aes-key --email you@example.com --sn E21D6000PBF9ELG5 --quiet
+
+# Pre-existing access token (skip login):
+unitree-fetch-aes-key --token <accessToken> --sn E21D6000PBF9ELG5
+```
+
+Equivalent if you don't have it on `$PATH`:
+```sh
+python -m unitree_webrtc_connect._cli --help
+```
+
+The interactive output is a labelled panel (SN / alias / online / region / key); `--quiet` swaps that for a bare key on stdout so you can pipe it:
+
+```sh
+KEY=$(unitree-fetch-aes-key --email ... --sn E21D... --quiet)
+```
+
+### Fetch programmatically
+
+```python
+from unitree_webrtc_connect import UnitreeCloud, fetch_aes_key
+
+# One-shot lookup
+key = fetch_aes_key("you@example.com", "...", sn="E21D6000PBF9ELG5",
+                    region="global", device_type="G1")
+
+# Or keep the cloud client around for other calls
+cloud = UnitreeCloud(region="global", device_type="G1")
+cloud.login_email("you@example.com", "...")
+for d in cloud.list_devices():
+    print(d.sn, d.alias, d.key)
+```
+
+### Typed errors
+
+When you supply the wrong / missing key, the SDK raises typed exceptions you can catch instead of relying on stack traces:
+
+```python
+from unitree_webrtc_connect import (
+    AesKeyRequiredError,    # data2=3 robot reached without a key
+    AesKeyRejectedError,    # GCM tag check failed (wrong key)
+    LocalSignalingPortError, # neither :9991 nor :8081 reachable on the IP
+    RobotBusyError,          # robot rejected — another WebRTC client is connected
+    NoSdpAnswerError,        # signaling round-trip returned no SDP
+    DataChannelTimeoutError, # data channel didn't validate in time
+)
+
+try:
+    await conn.connect()
+except AesKeyRejectedError as e:
+    ...
 ```
 
 ## Examples
@@ -126,10 +235,11 @@ Examples are organized by robot model under the `/examples` directory:
 
 ## Imports
 
-All public classes and constants are exported from the package root:
+All public classes, helpers and exception types are exported from the package root:
 
 ```python
 from unitree_webrtc_connect import (
+    # Core driver
     UnitreeWebRTCConnection,
     WebRTCConnectionMethod,
     WebRTCDataChannel,
@@ -137,6 +247,20 @@ from unitree_webrtc_connect import (
     DATA_CHANNEL_TYPE,
     RTC_TOPIC,
     SPORT_CMD,
+
+    # Cloud helpers (data2=3, account / TURN flow, bind list)
+    UnitreeCloud,
+    UnitreeCloudError,
+    RobotDevice,
+    fetch_aes_key,
+
+    # Typed errors
+    AesKeyRequiredError,
+    AesKeyRejectedError,
+    DataChannelTimeoutError,
+    LocalSignalingPortError,
+    NoSdpAnswerError,
+    RobotBusyError,
 )
 ```
 

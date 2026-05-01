@@ -51,6 +51,20 @@ from .constants import (  # noqa: E402
     SPORT_CMD,
 )
 from .msgs.pub_sub import WebRTCDataChannelPubSub  # noqa: E402
+from .unitree_cloud import (  # noqa: E402
+    UnitreeCloud,
+    UnitreeCloudError,
+    RobotDevice,
+    fetch_aes_key,
+)
+from .unitree_auth import (  # noqa: E402
+    AesKeyRequiredError,
+    AesKeyRejectedError,
+    DataChannelTimeoutError,
+    LocalSignalingPortError,
+    NoSdpAnswerError,
+    RobotBusyError,
+)
 
 __all__ = [
     "UnitreeWebRTCConnection",
@@ -60,4 +74,14 @@ __all__ = [
     "DATA_CHANNEL_TYPE",
     "RTC_TOPIC",
     "SPORT_CMD",
+    "UnitreeCloud",
+    "UnitreeCloudError",
+    "RobotDevice",
+    "fetch_aes_key",
+    "AesKeyRequiredError",
+    "AesKeyRejectedError",
+    "DataChannelTimeoutError",
+    "LocalSignalingPortError",
+    "NoSdpAnswerError",
+    "RobotBusyError",
 ]

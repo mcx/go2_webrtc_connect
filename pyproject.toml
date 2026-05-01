@@ -1,6 +1,6 @@
 [project]
 name = "unitree_webrtc_connect"
-version = "2.0.5"
+version = "2.1.0"
 description = "Connect to the Unitree Go2 and G1 with WebRTC"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -12,6 +12,7 @@ dependencies = [
     "aiortc>=1.9.0",
     "pycryptodome",
     "requests",
+    "curl_cffi",
     "wasmtime",
     "flask-socketio",
     "lz4",
@@ -22,6 +23,9 @@ dependencies = [
     "pydub",
     "opencv-python"
 ]
+
+[project.scripts]
+unitree-fetch-aes-key = "unitree_webrtc_connect._cli:main"
 
 [build-system]
 requires = ["setuptools>=64", "wheel"]
