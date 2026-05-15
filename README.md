@@ -208,7 +208,19 @@ except AesKeyRejectedError as e:
 
 ## Examples
 
-Examples are organized by robot model under the `/examples` directory:
+Examples are organized by robot model under the `/examples` directory.
+
+All examples default to `ip="192.168.8.181"` but read the `UNITREE_ROBOT_IP`
+environment variable if set, so you can point them at your robot without
+editing the source:
+
+```bash
+export UNITREE_ROBOT_IP=192.168.8.181
+python examples/go2/data_channel/sportmode/sportmode.py
+```
+
+For G1 examples, also set `UNITREE_AES_128_KEY` (fetch via
+`unitree-fetch-aes-key`) on firmware ≥ 1.5.1.
 
 ### Go2
 
