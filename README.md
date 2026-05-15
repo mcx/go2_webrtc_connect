@@ -20,8 +20,7 @@ Python WebRTC driver for Unitree Go2 and G1 robots. Provides high-level control 
 | Robot | Firmware Versions | Auth |
 |-------|-------------------|------|
 | **Go2** | 1.1.1 – 1.1.14 *(latest)*, 1.0.19 – 1.0.25 | static GCM key (`data2=2`) |
-| **G1** | 1.2.0 – 1.4.5 | static GCM key (`data2=2`) |
-| **G1** | 1.5.1+ *(latest)* | per-device AES-128 key (`data2=3`) — see [G1 ≥ 1.5.1 — AES-128 Key](#g1--151--aes-128-key-data23) |
+| **G1** | 1.2.0 – 1.4.5<br>1.5.1+ *(latest)* | static GCM key (`data2=2`)<br>per-device AES-128 key (`data2=3`) — see [G1 ≥ 1.5.1 — AES-128 Key](#g1--151--aes-128-key-data23) |
 
 ## Features
 
