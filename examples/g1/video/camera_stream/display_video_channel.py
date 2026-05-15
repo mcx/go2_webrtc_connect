@@ -22,12 +22,13 @@ logging.basicConfig(level=logging.FATAL)
 # G1 firmware >= 1.5.1 requires an AES-128 key (data2=3 auth path).
 # Fetch with `unitree-fetch-aes-key` and set UNITREE_AES_128_KEY, or paste below.
 AES_128_KEY = os.environ.get("UNITREE_AES_128_KEY")  # 32 hex chars, e.g. "6c5123..."
+ROBOT_IP = os.environ.get("UNITREE_ROBOT_IP", "192.168.8.181")
 
 def main():
     frame_queue = Queue()
 
     # Choose a connection method (uncomment the correct one)
-    conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181", aes_128_key=AES_128_KEY)
+    conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip=ROBOT_IP, aes_128_key=AES_128_KEY)
     # conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP, aes_128_key=AES_128_KEY)
 
     # Async function to receive video frames and put them in the queue
