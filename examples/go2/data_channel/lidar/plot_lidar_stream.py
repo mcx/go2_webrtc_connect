@@ -31,6 +31,8 @@ logging.basicConfig(level=logging.FATAL)
 ENABLE_POINT_CLOUD = True
 SAVE_LIDAR_DATA = True
 
+ROBOT_IP = os.environ.get("UNITREE_ROBOT_IP", "192.168.8.181")
+
 # File paths
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 LIDAR_CSV_FILE = f"lidar_data_{timestamp}.csv"
@@ -130,7 +132,7 @@ async def lidar_webrtc_connection():
 
     while retry_attempts < MAX_RETRY_ATTEMPTS:
         try:
-            conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")  # WebRTC IP
+            conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip=ROBOT_IP)  # WebRTC IP
             # _webrtc_connection = UnitreeWebRTCConnection(WebRTCConnectionMethod.Remote, serialNumber="B42D2000XXXXXXXX", username="email@gmail.com", password="pass")
             # _webrtc_connection = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)
 

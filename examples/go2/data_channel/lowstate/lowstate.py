@@ -1,11 +1,14 @@
 import asyncio
 import logging
+import os
 import sys
 from unitree_webrtc_connect.webrtc_driver import UnitreeWebRTCConnection, WebRTCConnectionMethod
 from unitree_webrtc_connect.constants import RTC_TOPIC
 
 # Enable logging for debugging
 logging.basicConfig(level=logging.FATAL)
+
+ROBOT_IP = os.environ.get("UNITREE_ROBOT_IP", "192.168.8.181")
 
 def display_data(message):
 
@@ -58,7 +61,7 @@ def display_data(message):
 async def main():
     try:
         # Choose a connection method (uncomment the correct one)
-        conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.8.181")
+        conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip=ROBOT_IP)
         # conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, serialNumber="B42D2000XXXXXXXX")
         # conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.Remote, serialNumber="B42D2000XXXXXXXX", username="email@gmail.com", password="pass")
         # conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalAP)

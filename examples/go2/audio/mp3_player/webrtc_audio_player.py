@@ -9,10 +9,12 @@ from unitree_webrtc_connect.webrtc_audiohub import WebRTCAudioHub
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
+ROBOT_IP = os.environ.get("UNITREE_ROBOT_IP", "192.168.137.120")
+
 async def main():
     try:
         # Establish WebRTC connection
-        conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip="192.168.137.120")
+        conn = UnitreeWebRTCConnection(WebRTCConnectionMethod.LocalSTA, ip=ROBOT_IP)
         await conn.connect()
         logger.info("WebRTC connection established")
 

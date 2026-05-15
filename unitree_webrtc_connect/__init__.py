@@ -49,6 +49,7 @@ from .constants import (  # noqa: E402
     DATA_CHANNEL_TYPE,
     RTC_TOPIC,
     SPORT_CMD,
+    SPORT_CMD_MCF,
 )
 from .msgs.pub_sub import WebRTCDataChannelPubSub  # noqa: E402
 from .unitree_cloud import (  # noqa: E402
@@ -74,6 +75,7 @@ __all__ = [
     "DATA_CHANNEL_TYPE",
     "RTC_TOPIC",
     "SPORT_CMD",
+    "SPORT_CMD_MCF",
     "UnitreeCloud",
     "UnitreeCloudError",
     "RobotDevice",

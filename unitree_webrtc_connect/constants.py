@@ -159,6 +159,56 @@ SPORT_CMD = {
     "CrossWalk": 1051
 }
 
+# MCF (Multi-Control Framework) sport api_ids — introduced in Unitree firmware
+# 1.1.7 and used since. Shares the `rt/api/sport/request` topic with normal
+# mode but uses a different api_id space (e.g. BackFlip is 2043 in MCF vs 1044
+# in normal). Robot must already be in MCF mode (no motion_switcher handshake).
+SPORT_CMD_MCF = {
+    "Damp":             1001,
+    "BalanceStand":     1002,
+    "StopMove":         1003,
+    "StandUp":          1004,
+    "StandDown":        1005,
+    "RecoveryStand":    1006,
+    "Euler":            1007,
+    "Move":             1008,
+    "Sit":              1009,
+    "RiseSit":          1010,
+    "SpeedLevel":       1015,
+    "Hello":            1016,
+    "Stretch":          1017,
+    "ContinuousGait":   1019,
+    "Content":          1020,
+    "Dance1":           1022,
+    "Dance2":           1023,
+    "GetSpeedLevel":    1026,
+    "SwitchJoystick":   1027,
+    "Pose":             1028,
+    "Scrape":           1029,
+    "FrontFlip":        1030,
+    "FrontJump":        1031,
+    "FrontPounce":      1032,
+    "GetState":         1034,
+    "Heart":            1036,
+    "StaticWalk":       1061,
+    "TrotRun":          1062,
+    "EconomicGait":     1063,
+    "LeftFlip":         2041,
+    "BackFlip":         2043,
+    "HandStand":        2044,
+    "FreeWalk":         2045,
+    "FreeBound":        2046,
+    "FreeJump":         2047,
+    "FreeAvoid":        2048,
+    "ClassicWalk":      2049,
+    "BackStand":        2050,
+    "CrossStep":        2051,
+    "SetAutoRecovery":  2054,
+    "GetAutoRecovery":  2055,
+    "LeadFollow":       2056,
+    "SwitchAvoidMode":  2058,
+}
+
 class VUI_COLOR:
     WHITE: str = 'white'
     RED: str = 'red'
