@@ -65,28 +65,33 @@ def get_error_source_text(error_source):
 
 def handle_error(message):
     """
-    Handle the error message, print the time, error source, and error message.
+    Handle an error data-channel message and print it.
+
+    Three message types share this handler — confirmed against the Unitree app
+    source (UnitreeGo APK):
+      - "errors"    : data is a list of [ts, src, code] (full snapshot)
+      - "add_error" : data is a single [ts, src, code] (one new error)
+      - "rm_error"  : data is a single [ts, src, code] (one cleared error)
+    Normalise the single-tuple cases to a list so one loop handles all three.
 
     Args:
-        message (dict): The error message containing the data field.
+        message (dict): The error message with `type` and `data` fields.
     """
-    data = message["data"]
+    msg_type = message.get("type")
+    data = message.get("data") or []
+    if data and not isinstance(data[0], (list, tuple)):
+        data = [data]
 
-    for error in data:
-        timestamp, error_source, error_code_int = error
-        
-        # Convert the timestamp to human-readable format
+    icon = {"add_error": "🚨", "rm_error": "✅", "errors": "📋"}.get(msg_type, "🚨")
+    verb = {"add_error": "appeared", "rm_error": "cleared", "errors": "active"}.get(msg_type, "received")
+
+    for timestamp, error_source, error_code_int in data:
         readable_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))
-
         error_source_text = get_error_source_text(error_source)
-        
-        # Convert the error code to a hexadecimal string
         error_code_hex = integer_to_hex_string(error_code_int)
-        
-        # Get the error message
         error_code_text = get_error_code_text(error_source, error_code_hex)
 
-        print(f"\n🚨 Error Received from Go2:\n"
+        print(f"\n{icon} Error {verb}:\n"
             f"🕒 Time:          {readable_time}\n"
             f"🔢 Error Source:  {error_source_text}\n"
             f"❗ Error Code:    {error_code_text}\n")
