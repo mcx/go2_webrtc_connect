@@ -126,7 +126,7 @@ UnitreeWebRTCConnection(
 # G1 in China region
 UnitreeWebRTCConnection(
     WebRTCConnectionMethod.Remote,
-    serialNumber="E21D6000PBF9ELG5",
+    serialNumber="E21D6000XXXXXXXX",
     username="email@gmail.com",
     password="pass",
     region="cn",
@@ -152,10 +152,10 @@ unitree-fetch-aes-key --email you@example.com --password '...'
 unitree-fetch-aes-key --email you@example.com --password '...' --region cn
 
 # Single SN, scriptable (bare key on stdout):
-unitree-fetch-aes-key --email you@example.com --sn E21D6000PBF9ELG5 --quiet
+unitree-fetch-aes-key --email you@example.com --sn E21D6000XXXXXXXX --quiet
 
 # Pre-existing access token (skip login):
-unitree-fetch-aes-key --token <accessToken> --sn E21D6000PBF9ELG5
+unitree-fetch-aes-key --token <accessToken> --sn E21D6000XXXXXXXX
 ```
 
 Equivalent if you don't have it on `$PATH`:
@@ -175,7 +175,7 @@ KEY=$(unitree-fetch-aes-key --email ... --sn E21D... --quiet)
 from unitree_webrtc_connect import UnitreeCloud, fetch_aes_key
 
 # One-shot lookup
-key = fetch_aes_key("you@example.com", "...", sn="E21D6000PBF9ELG5",
+key = fetch_aes_key("you@example.com", "...", sn="E21D6000XXXXXXXX",
                     region="global", device_type="G1")
 
 # Or keep the cloud client around for other calls
