@@ -209,6 +209,15 @@ SPORT_CMD_MCF = {
     "SwitchAvoidMode":  2058,
 }
 
+# Obstacle-avoidance api_ids — topic is `rt/api/obstacles_avoid/request`
+# (= RTC_TOPIC["OBSTACLES_AVOID"]).
+OBSTACLES_AVOID_API = {
+    "SWITCH_SET":                  1001,  # {"enable": bool}
+    "SWITCH_GET":                  1002,  # {} -> {"enable": bool}
+    "MOVE":                        1003,  # {"x", "y", "yaw", "mode": 0} (no-reply)
+    "USE_REMOTE_COMMAND_FROM_API": 1004,  # {"is_remote_commands_from_api": bool}
+}
+
 class VUI_COLOR:
     WHITE: str = 'white'
     RED: str = 'red'

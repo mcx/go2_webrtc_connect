@@ -50,6 +50,7 @@ from .constants import (  # noqa: E402
     RTC_TOPIC,
     SPORT_CMD,
     SPORT_CMD_MCF,
+    OBSTACLES_AVOID_API,
 )
 from .msgs.pub_sub import WebRTCDataChannelPubSub  # noqa: E402
 from .unitree_cloud import (  # noqa: E402
@@ -76,6 +77,7 @@ __all__ = [
     "RTC_TOPIC",
     "SPORT_CMD",
     "SPORT_CMD_MCF",
+    "OBSTACLES_AVOID_API",
     "UnitreeCloud",
     "UnitreeCloudError",
     "RobotDevice",
