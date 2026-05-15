@@ -227,10 +227,12 @@ For G1 examples, also set `UNITREE_AES_128_KEY` (fetch via
 | Category | Example | Description |
 |----------|---------|-------------|
 | **Data Channel** | `data_channel/sportmode/` | Sport mode movement commands |
+| | `data_channel/sportmode_mcf/` | Interactive MCF sport menu (firmware ≥ 1.1.7) |
 | | `data_channel/sportmodestate/` | Subscribe to sport mode state |
 | | `data_channel/lowstate/` | Subscribe to low-level state (IMU, motors) |
 | | `data_channel/multiplestate/` | Subscribe to multiple state topics |
 | | `data_channel/vui/` | VUI control (LED, volume, brightness) |
+| | `data_channel/obstacles_avoid/` | Toggle obstacle avoidance + WASD drive |
 | | `data_channel/lidar/lidar_stream.py` | LiDAR point cloud subscription |
 | | `data_channel/lidar/plot_lidar_stream.py` | LiDAR 3D visualization (Three.js) |
 | **Audio** | `audio/live_audio/` | Live audio receive |
@@ -244,6 +246,7 @@ For G1 examples, also set `UNITREE_AES_128_KEY` (fetch via
 | Category | Example | Description |
 |----------|---------|-------------|
 | **Data Channel** | `data_channel/sport_mode/` | Sport mode movement commands |
+| **Video** | `video/camera_stream/` | Display video stream (requires AES-128 key on firmware ≥ 1.5.1) |
 
 ## Imports
 
